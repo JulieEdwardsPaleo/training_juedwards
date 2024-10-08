@@ -1,0 +1,85 @@
+---
+title: "QuickAnalysis"
+format: html
+editor: visual
+---
+
+# Intro
+
+## About the data
+
+The data was downloaded from [Arctic Data Center:](https://arcticdata.io/) <https://arcticdata.io/> on 07/10/2024
+
+## Setup
+
+Attach important packages
+
+```{r}
+#| warning: false
+library(readr)
+library(here)
+
+```
+
+## Read in the data :)
+
+```{r}
+#| warning: false
+#| message: false
+
+bg_chem <- read_csv(here('data','BGchem2008data.csv'))
+
+```
+
+# Analysis
+
+## Summary Stats
+
+```{r}
+#| echo: false
+#| eval: false
+## Prints the column names of my data frame
+colnames(bg_chem)
+
+## General structure of the data frame - shows class of each column
+str(bg_chem)
+
+## First 6 lines of the data frame
+head(bg_chem)
+
+## Summary of each column of data
+summary(bg_chem)
+
+## Prints unique values in a column (in this case Date)
+unique(bg_chem$Date)
+```
+
+
+```{r}
+nitrate <- mean(bg_chem$NO3)
+nitrite <- mean(bg_chem$NO2)
+amm <- mean(bg_chem$NH4)
+phos <- mean(bg_chem$P)
+
+```
+
+## Calculate mean Redfield ratio
+
+```{r}
+ratio <- (nitrate + nitrite + amm)/phos
+
+```
+
+The Redfield ratio for this dataset is approximately: `r round(ratio)`
+
+## plotting
+
+
+```{r}
+#| echo: false
+plot(bg_chem$P, bg_chem$NO2 + bg_chem$NO3 + bg_chem$NH4)
+```
+
+
+
+# Conclusion
