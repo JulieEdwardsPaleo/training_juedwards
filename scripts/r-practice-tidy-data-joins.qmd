@@ -1,0 +1,171 @@
+---
+title: "R Practice: Tidy Data and Joins"
+format: html
+execute:
+  warning: false
+  message: false
+---
+
+
+```{r}
+#| warning: false
+#| message: false
+#| echo: false
+library(readr)
+library(dplyr)
+library(here)
+library(lubridate) # for bonus question
+```
+
+# Read in data
+```{r}
+# read in data using download links
+bird_observations <- read_csv("https://portal.edirepository.org/nis/dataviewer?packageid=knb-lter-cap.256.10&entityid=53edaa7a0e083013d9bf20322db1780e")
+surveys <- read_csv("https://portal.edirepository.org/nis/dataviewer?packageid=knb-lter-cap.256.10&entityid=b2466fa5cb5ed7ee1ea91398fc291c59")
+sites <- read_csv("https://portal.edirepository.org/nis/dataviewer?packageid=knb-lter-cap.256.10&entityid=81bf72420e69077097fb0790dcdc63a6")
+taxalist <- read_csv("https://portal.edirepository.org/nis/dataviewer?packageid=knb-lter-cap.256.10&entityid=58f863b7e3066e68536a9cacdc7bd58e")
+```
+
+
+```{r}
+#| eval: false
+#| echo: false
+
+# returns dimensions of the dataframe by number of rows and number of cols
+dim(bird_observations)
+
+# returns the top six rows of the dataframe
+head(bird_observations)
+
+# returns all the columns and some info about the cols
+glimpse(bird_observations)
+
+# similar to glimpse but returns some summary statistics about the cols
+summary(bird_observations)
+
+# returns column names 
+names(bird_observations)
+
+# returns unique values in a column. In this case we can see all the different bird species IDs
+unique(bird_observations$species_id)
+```
+
+
+
+bird_observations: Primary key is a compound key made up of survey_id, site_id, and species_id. The foreign key is species_id.
+taxalist: Primary key is species_id and does not have a foreign key that match the primary key in bird_observations.
+However, we could join bird_observations and taxalist by species_id, but depending on the type of join some values would be droped or NAs would be introduce in the resulting data frame.
+
+```{r}
+birds_subset <- bird_observations %>% 
+  filter(species_id %in% c("BHCO", "RWBL")) %>% 
+  filter(site_id %in% c("LI-W", "NU-C"))
+```
+
+sub-setting by species and site location
+
+
+# First, answer: what do you expect the outcome data frame when doing left_join() between birds_subset and sites to look like? What observations do you expect in the outcome data frame.
+I expect to see all columns and all observations from birds_subset and from sites, I expect to see the columns park_code, park_district, park-name, point_code, point_location and park_acreage and only observations for NU-C and LI-W because those are the only site_id values in birds_subset and in a left join only the observations matching the left table (in this case, birds_subset is the left table) will be kept.
+
+```{r}
+# syntax using pipe
+birds_left <- birds_subset %>% 
+  left_join(y = sites, by = "site_id")
+# don't see x = birds_subset here because piping in birds_subset means it automatically assumes birds_subset as x.
+
+head(birds_left)
+```
+
+# First, answer: what do you expect a full_join() between birds_subset and sites to contain? 
+
+I expect to see all columns and all observations from birds_subset and all columns and all observations from sites to be merged into one data frame because in a full join everything is kept. NA values could be introduced.
+
+```{r}
+# syntax using pipe
+birds_full <- birds_subset %>% 
+  full_join(y = sites, by = "site_id")
+
+head(birds_full)
+```
+
+Missing values of bird-related data since we subset some sites out from the bird data
+
+# what do you expect an inner_join() between birds_subset and taxalist to contain?
+
+```{r}
+# syntax using pipe
+birds_inner <- birds_subset %>% 
+  inner_join(y = taxalist, by = "species_id")
+
+head(birds_inner)
+```
+
+# What would you get if instead of inner_join() you’d used left_join() for this example? Write code for the left join and check.
+
+
+```{r}
+# syntax using pipe
+birds_left_test <- birds_subset %>% 
+  left_join(y = taxalist, by = "species_id")
+
+
+head(birds_left_test)
+```
+
+Same results, would have NAs for missing bird-related values for the species that were subset out but still are listed in the taxonomy data if using right join
+
+
+# Starting with your object bird_observations, rename the notes column to bird_obs_notes (so this doesn’t conflict with notes in the surveys table).
+
+```{r}
+bird_observations <- bird_observations %>% 
+  rename(bird_obs_notes = notes)
+```
+
+# now join all together with the non-conflicting columns 
+
+```{r}
+bird_obs_subset <- bird_observations %>% 
+  full_join(y = taxalist, by = "species_id") %>% 
+  full_join(y = sites, by = "site_id") %>% 
+  full_join(y = surveys, by = c("site_id", "survey_id")) %>%  
+  select(survey_date, common_name, park_name, bird_count, observer)
+```
+
+# Continuing with bird_obs_subset, first use unique() to see the different unique values in the column observer. How many observers are there? Which value is unlike the others?
+
+```{r}
+unique(bird_obs_subset$observer)
+```
+
+Mystery observer, there's a NA value. And Josh Burns naming convention doesn't match the rest, needs to be J. Burns
+
+```{r}
+bird_obs_subset <- bird_obs_subset %>% 
+  mutate(observer = if_else(condition = observer == "Josh Burns", 
+                            true = "J. Burns", 
+                            false = observer))
+
+unique(bird_obs_subset$observer)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
