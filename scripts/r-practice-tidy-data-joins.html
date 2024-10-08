@@ -211,7 +211,56 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 #   ¹​distance, ²​bird_count, ³​direction, ⁴​common_name</code></pre>
 </div>
 </div>
-<p>Missing bird-related values for the species that were subset out but still are listed in the taxonomy data</p>
+<p>Same results, would have NAs for missing bird-related values for the species that were subset out but still are listed in the taxonomy data if using right join</p>
+</section>
+<section id="starting-with-your-object-bird_observations-rename-the-notes-column-to-bird_obs_notes-so-this-doesnt-conflict-with-notes-in-the-surveys-table." class="level1">
+<h1>Starting with your object bird_observations, rename the notes column to bird_obs_notes (so this doesn’t conflict with notes in the surveys table).</h1>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>bird_observations <span class="ot">&lt;-</span> bird_observations <span class="sc">%&gt;%</span> </span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">bird_obs_notes =</span> notes)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="now-join-all-together-with-the-non-conflicting-columns" class="level1">
+<h1>now join all together with the non-conflicting columns</h1>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>bird_obs_subset <span class="ot">&lt;-</span> bird_observations <span class="sc">%&gt;%</span> </span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">full_join</span>(<span class="at">y =</span> taxalist, <span class="at">by =</span> <span class="st">"species_id"</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">full_join</span>(<span class="at">y =</span> sites, <span class="at">by =</span> <span class="st">"site_id"</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">full_join</span>(<span class="at">y =</span> surveys, <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"site_id"</span>, <span class="st">"survey_id"</span>)) <span class="sc">%&gt;%</span>  </span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(survey_date, common_name, park_name, bird_count, observer)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="continuing-with-bird_obs_subset-first-use-unique-to-see-the-different-unique-values-in-the-column-observer.-how-many-observers-are-there-which-value-is-unlike-the-others" class="level1">
+<h1>Continuing with bird_obs_subset, first use unique() to see the different unique values in the column observer. How many observers are there? Which value is unlike the others?</h1>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">unique</span>(bird_obs_subset<span class="sc">$</span>observer)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "B. Rambo"   "J. Lemmer"  "D. Stuart"  "C. Putnam"  "S. Lerman" 
+[6] "Josh Burns" NA          </code></pre>
+</div>
+</div>
+<p>Mystery observer, there’s a NA value. And Josh Burns naming convention doesn’t match the rest, needs to be J. Burns</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>bird_obs_subset <span class="ot">&lt;-</span> bird_obs_subset <span class="sc">%&gt;%</span> </span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">observer =</span> <span class="fu">if_else</span>(<span class="at">condition =</span> observer <span class="sc">==</span> <span class="st">"Josh Burns"</span>, </span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>                            <span class="at">true =</span> <span class="st">"J. Burns"</span>, </span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>                            <span class="at">false =</span> observer))</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a><span class="fu">unique</span>(bird_obs_subset<span class="sc">$</span>observer)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "B. Rambo"  "J. Lemmer" "D. Stuart" "C. Putnam" "S. Lerman" "J. Burns" 
+[7] NA         </code></pre>
+</div>
+</div>
+</section>
+<section id="bonus-q" class="level1">
+<h1>Bonus Q</h1>
+<ul>
+<li><p>Use lubridate::month() to add a new column to bird_obs_subset called survey_month, containing only the month number. Then, convert the month number to a factor (again within mutate()).</p></li>
+<li><p>Use dplyr::relocate() to move the new survey_month column to immediately after the survey_date column. You can do this in a separate code chunk, or pipe straight into it from your existing code.</p></li>
+<li><p>Filter to only include parks Lindo, Orme, Palomino, and Sonrisa.</p></li>
+<li><p>Find the total number of birds observed by park and month (Hint: You can use group_by() and summarize()).</p></li>
+</ul>
 </section>
 
 </main>
