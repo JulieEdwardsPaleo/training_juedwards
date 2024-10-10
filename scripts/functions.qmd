@@ -1,0 +1,63 @@
+---
+title: "introtofunctions"
+format:
+  html:
+    toc: true
+    code-fold: true
+    embed-resources: true # single self-contained html file
+execute:
+  warning: false
+  message: false
+---
+
+
+```{r}
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+
+
+```
+
+
+```{r}
+airtemps <- c(212, 30.3, 78, 32)
+celsius1 <- (airtemps[1] - 32) * 5/9
+celsius2 <- (airtemps[2] - 32) * 5/9
+celsius3 <- (airtemps[3] - 32) * 5/9
+fahr_to_celsius <- function(fahr) {
+  celsius <- (fahr - 32) * 5/9
+  return(celsius)
+}
+celsius1a <- fahr_to_celsius(fahr = airtemps[1])
+celsius1a
+celsius <- fahr_to_celsius(fahr = airtemps)
+celsius
+
+
+celcius_to_fahr <- function(cel){
+  fahr<- (cel*9/5)+32
+  return(fahr)
+}
+fahr1a <- celcius_to_fahr(cel = celsius[1])
+  
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

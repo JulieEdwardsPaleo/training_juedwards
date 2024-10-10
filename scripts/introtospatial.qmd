@@ -1,6 +1,10 @@
 ---
 title: "intro to spatial data"
-format: html
+format:
+  html:
+    toc: true
+    code-fold: true
+    embed-resources: true # single self-contained html file
 execute:
   warning: false
   message: false
